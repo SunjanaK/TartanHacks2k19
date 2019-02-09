@@ -4,6 +4,7 @@ import re
 import sys
 import time
 import io
+import random
 
 from google.cloud import speech
 from google.cloud.speech import enums
@@ -11,6 +12,7 @@ from google.cloud.speech import types
 import pyaudio
 import wave
 from six.moves import queue
+import pygame
 
 import time
 
@@ -18,62 +20,10 @@ from google.cloud import texttospeech
 client = texttospeech.TextToSpeechClient()
 
 
+def twenty(text):
+    if len(text) < 20:
+        
 
-
-import pygame
-# Set the text input to be synthesized
-# synthesis_input = texttospeech.types.SynthesisInput(text="Hello, World!")
-# entry = texttospeech.types.SynthesisInput(text="Hey what's up! My name is Sara! What's your name?")
-# action = texttospeech.types.SynthesisInput(text="Awesome! I had a fun weekend! I went swimming in our community pool. What did you do over the weekend?")
-# a
-# food = texttospeech.types.SynthesisInput(text="Awesome! Man, these cookies are delicious. What's your favorite dessert?")
-#
-# exit = texttospeech.types.SynthesisInput(text="That sounds great! Well it was good catching up! See you around!")
-#
-# # Build the voice request, select the language code ("en-US") and the ssml
-# # voice gender ("neutral")
-# # girl = texttospeech.types.VoiceSelectionParams(
-# #     language_code='en-US',
-# #     ssml_gender=texttospeech.enums.SsmlVoiceGender.FEMALE)
-# girl = texttospeech.types.VoiceSelectionParams(
-#     language_code='en-US',
-#     ssml_gender=texttospeech.enums.SsmlVoiceGender.FEMALE)
-#
-# coach = texttospeech.types.VoiceSelectionParams(
-#     language_code='en-US',
-#     ssml_gender=texttospeech.enums.SsmlVoiceGender.MALE)
-#
-# # Select the type of audio file you want returned
-# audio_config = texttospeech.types.AudioConfig(
-#     audio_encoding=texttospeech.enums.AudioEncoding.MP3)
-#
-# # Perform the text-to-speech request on the text input with the selected
-# # voice parameters and audio file type
-# girlspeak = client.synthesize_speech(synthesis_input, voice, audio_config)
-#
-# counter = 0
-#
-# while counter < 3:
-#
-#
-
-
-
-def loadmp3player(file):
-        # print(file)
-        pygame.init()
-        pygame.mixer.init()
-        pygame.mixer.music.load(file)
-        pygame.mixer.music.play()
-        time.sleep(0.5)
-
-
-# # The response's audio_content is binary.
-# with open('output.mp3', 'wb') as out:
-#     # Write the response to the output file.
-#     out.write(response.audio_content)
-#     print('Audio content written to file "output.mp3"')
-#     loadmp3player("output.mp3")
 
 def record_file(time):
     language_code = 'en-US'  # a BCP-47 language tag
@@ -146,6 +96,77 @@ def transcribe_file(speech_file):
 
         # print(u'Transcript: {}'.format(result.alternatives[0].transcript))
         return result.alternatives[0].transcript
+
+
+# Set the text input to be synthesized
+
+entry = texttospeech.types.SynthesisInput(text="Hey what's up! My name is Sara! What's your name?")
+action_text = ["Awesome!", "I had a fun weekend", "I went swimming in our community pool", "What did you do over the weekend?"]
+critic = ["Try again"]
+
+food_text = ["Awesome!", "Man, these cookies are delicious", "What's your favorite dessert?"]
+
+exit = texttospeech.types.SynthesisInput(text="That sounds great! Well it was good catching up! See you around!")
+conversations = [action_text, food_text]
+
+girl = texttospeech.types.VoiceSelectionParams(
+    language_code='en-US',
+    ssml_gender=texttospeech.enums.SsmlVoiceGender.FEMALE)
+
+
+coach = texttospeech.types.VoiceSelectionParams(
+    language_code='en-US',
+    ssml_gender=texttospeech.enums.SsmlVoiceGender.MALE)
+
+# Select the type of audio file you want returned
+audio_config = texttospeech.types.AudioConfig(
+    audio_encoding=texttospeech.enums.AudioEncoding.MP3)
+
+# Perform the text-to-speech request on the text input with the selected
+# voice parameters and audio file type
+
+convoDone = False
+
+while convoDone == False:
+    girlspeak = client.synthesize_speech(entry, girl, audio_config)
+    #to transcribe_file(record_file(5)) and "My name is" not in response
+    coachspeak = client.synthesize_speech(critic, coach, audio_config)
+    convo = random.choice(conversations)
+    for item in convo:
+        girlspeak = client.synthesize_speech(item, girl, audio_config)
+    ##else:
+
+
+
+
+
+
+
+coachspeak = client.synthesize_speech(synthesis_input, )
+
+
+#
+#
+
+
+
+def loadmp3player(file):
+        # print(file)
+        pygame.init()
+        pygame.mixer.init()
+        pygame.mixer.music.load(file)
+        pygame.mixer.music.play()
+        time.sleep(0.5)
+
+
+# # The response's audio_content is binary.
+# with open('output.mp3', 'wb') as out:
+#     # Write the response to the output file.
+#     out.write(response.audio_content)
+#     print('Audio content written to file "output.mp3"')
+#     loadmp3player("output.mp3")
+
+
     # [END speech_python_migration_sync_response]
 # [END speech_transcribe_sync]
 print(transcribe_file(record_file(5)))
