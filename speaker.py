@@ -1,26 +1,26 @@
-# from __future__ import division
-#
-# import re
-# import sys
-# import time
-# import io
-#
-# from google.cloud import speech
-# from google.cloud.speech import enums
-# from google.cloud.speech import types
-# import pyaudio
-# import wave
-# from six.moves import queue
-#
-# import time
-#
-# from google.cloud import texttospeech
-# client = texttospeech.TextToSpeechClient()
-#
-#
-#
-#
-# import pygame
+from __future__ import division
+
+import re
+import sys
+import time
+import io
+
+from google.cloud import speech
+from google.cloud.speech import enums
+from google.cloud.speech import types
+import pyaudio
+import wave
+from six.moves import queue
+
+import time
+
+from google.cloud import texttospeech
+client = texttospeech.TextToSpeechClient()
+
+
+
+
+import pygame
 #
 # i = 0
 #
@@ -94,11 +94,58 @@ audio_config = texttospeech.types.AudioConfig(
 # voice parameters and audio file type
 response = client.synthesize_speech(synthesis_input, voice, audio_config)
 
+def loadmp3player(file):
+        # print(file)
+        pygame.init()
+        pygame.mixer.init()
+        pygame.mixer.music.load(file)
+        pygame.mixer.music.play()
+        time.sleep(0.5)
+
+
 # The response's audio_content is binary.
 with open('output.mp3', 'wb') as out:
     # Write the response to the output file.
     out.write(response.audio_content)
     print('Audio content written to file "output.mp3"')
+    loadmp3player("output.mp3")
+
+def transcribe_file(speech_file):
+    """Transcribe the given audio file."""
+    from google.cloud import speech
+    from google.cloud.speech import enums
+    from google.cloud.speech import types
+    client = speech.SpeechClient()
+
+    with io.open(speech_file, 'rb') as audio_file:
+        content = audio_file.read()
+
+    audio = types.RecognitionAudio(content=content)
+    config = types.RecognitionConfig(
+        encoding=enums.RecognitionConfig.AudioEncoding.LINEAR16,
+        sample_rate_hertz=16000,
+        language_code='en-US')
+
+    response = client.recognize(config, audio)
+    # Each result is for a consecutive portion of the audio. Iterate through
+    # them to get the transcripts for the entire audio file.
+    for result in response.results:
+        # The first alternative is the most likely one for this portion.
+        print(u'Transcript: {}'.format(result.alternatives[0].transcript))
+        print("yes")
+transcribe_file("output.mp3")
+
+
+
+
+
+
+
+
+
+
+
+
 
 #
 # def record_file(time):
