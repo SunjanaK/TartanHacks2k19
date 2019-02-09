@@ -5,7 +5,8 @@ import sys
 import time
 import io
 import random
-
+import six
+from classify_text_tutorial import classify
 from google.cloud import speech
 from google.cloud.speech import enums
 from google.cloud.speech import types
@@ -21,8 +22,17 @@ client = texttospeech.TextToSpeechClient()
 
 
 def twenty(text):
+    i = 0
+    str = ""
     if len(text) < 20:
-        
+        while i < 20:
+            str += text
+            str += " "
+            i += 1
+    return str
+
+
+
 
 
 def record_file(time):
@@ -33,7 +43,7 @@ def record_file(time):
     CHANNELS = 1
     RATE = 44100
     RECORD_SECONDS = time
-    WAVE_OUTPUT_FILENAME = "voice2.wav"
+    WAVE_OUTPUT_FILENAME = "voice.wav"
 
     p = pyaudio.PyAudio()
 
@@ -97,59 +107,6 @@ def transcribe_file(speech_file):
         # print(u'Transcript: {}'.format(result.alternatives[0].transcript))
         return result.alternatives[0].transcript
 
-
-# Set the text input to be synthesized
-
-entry = texttospeech.types.SynthesisInput(text="Hey what's up! My name is Sara! What's your name?")
-action_text = ["Awesome!", "I had a fun weekend", "I went swimming in our community pool", "What did you do over the weekend?"]
-critic = ["Try again"]
-
-food_text = ["Awesome!", "Man, these cookies are delicious", "What's your favorite dessert?"]
-
-exit = texttospeech.types.SynthesisInput(text="That sounds great! Well it was good catching up! See you around!")
-conversations = [action_text, food_text]
-
-girl = texttospeech.types.VoiceSelectionParams(
-    language_code='en-US',
-    ssml_gender=texttospeech.enums.SsmlVoiceGender.FEMALE)
-
-
-coach = texttospeech.types.VoiceSelectionParams(
-    language_code='en-US',
-    ssml_gender=texttospeech.enums.SsmlVoiceGender.MALE)
-
-# Select the type of audio file you want returned
-audio_config = texttospeech.types.AudioConfig(
-    audio_encoding=texttospeech.enums.AudioEncoding.MP3)
-
-# Perform the text-to-speech request on the text input with the selected
-# voice parameters and audio file type
-
-convoDone = False
-
-while convoDone == False:
-    girlspeak = client.synthesize_speech(entry, girl, audio_config)
-    #to transcribe_file(record_file(5)) and "My name is" not in response
-    coachspeak = client.synthesize_speech(critic, coach, audio_config)
-    convo = random.choice(conversations)
-    for item in convo:
-        girlspeak = client.synthesize_speech(item, girl, audio_config)
-    ##else:
-
-
-
-
-
-
-
-coachspeak = client.synthesize_speech(synthesis_input, )
-
-
-#
-#
-
-
-
 def loadmp3player(file):
         # print(file)
         pygame.init()
@@ -158,6 +115,143 @@ def loadmp3player(file):
         pygame.mixer.music.play()
         time.sleep(0.5)
 
+def speak(response, counter):
+    with open(str(counter)+ ".mp3", 'wb') as out:
+
+        out.write(response.audio_content)
+
+        out.close()
+    file = str(counter)+ ".mp3"
+    loadmp3player(file)
+
+# Set the text input to be synthesized
+
+def verify_response(response, expectation):
+
+    accepted = []
+    if expectation == "action":
+        accepted = ["Arts & Entertainment",
+                    "Books & Literature",
+                    "Computers & Electronics",
+                    "Games",
+                    "Hobbies & Leisure",
+                    "Home & Garden",
+                    "Jobs & Education",
+                    "Online Communities",
+                    "People & Society",
+                    "Pets & Animals",
+                    "Shopping",
+                    "Sports",
+                    "Travel"]
+    classification = classify(response)
+    for (category, confidence) in classification.items():
+        try:
+            end = category[1:].index("/")
+            broad_category = category[1:end+1]
+        except:
+            broad_category = category[1:]
+        print(broad_category)
+        if broad_category in accepted:
+            return True
+    return False
+
+def conversation():
+    entry = texttospeech.types.SynthesisInput(text="Hey what's up! My name is Sara! What's your name?")
+    action = ["Awesome!", "I had a fun weekend", "I went swimming in our community pool", "What did you do over the weekend?"]
+    critic = "Try again"
+    affirmation = "That sounds good"
+    reinforcement = "Awesome job!"
+
+    food = ["Awesome!", "Man, these cookies are delicious", "What's your favorite dessert?"]
+
+    exit = texttospeech.types.SynthesisInput(text="That sounds great! Well it was good catching up! See you around!")
+    conversations = [action]
+
+    girl = texttospeech.types.VoiceSelectionParams(
+        language_code='en-US',
+        ssml_gender=texttospeech.enums.SsmlVoiceGender.FEMALE)
+
+
+    coach = texttospeech.types.VoiceSelectionParams(
+        language_code='en-US',
+        ssml_gender=texttospeech.enums.SsmlVoiceGender.MALE)
+
+    # Select the type of audio file you want returned
+    audio_config = texttospeech.types.AudioConfig(
+        audio_encoding=texttospeech.enums.AudioEncoding.MP3)
+
+    # Perform the text-to-speech request on the text input with the selected
+    # voice parameters and audio file type
+
+
+    convoDone = False
+
+    counter = 0
+
+    while convoDone == False:
+        girlspeak = client.synthesize_speech(entry, girl, audio_config)
+        counter += 1
+        speak(girlspeak, counter)
+        time.sleep(2)
+        name = transcribe_file(record_file(5))
+        print(name)
+        # coachspeak = client.synthesize_speech(texttospeech.types.SynthesisInput(critic), coach, audio_config)
+        # counter += 1
+        # speak(coachspeak, counter)
+        convo = random.choice(conversations)
+        girlspeak = client.synthesize_speech(texttospeech.types.SynthesisInput(text=name), girl, audio_config)
+        counter += 1
+        speak(girlspeak, counter)
+        notYet = True
+        if convo == action:
+            for item in convo:
+                girlspeak = client.synthesize_speech(texttospeech.types.SynthesisInput(text=item), girl, audio_config)
+                counter += 1
+                speak(girlspeak, counter)
+                time.sleep(1.5)
+                if convo.index(item) == len(convo)-1:
+                    response = transcribe_file(record_file(5))
+                    print(response)
+                    while notYet:
+                        for i in response.split(" "):
+                            print(i)
+                            if verify_response(twenty(i), "action") and ("I" not in response and "did" not in response):
+                                coachspeak = client.synthesize_speech(texttospeech.types.SynthesisInput(text=affirmation), coach, audio_config)
+                                counter += 1
+                                speak(coachspeak, counter)
+                                coachspeak = client.synthesize_speech(texttospeech.types.SynthesisInput(text=("Say I did" + str(i))), coach, audio_config)
+                                counter += 1
+                                speak(coachspeak, counter)
+                                if transcribe_file(record_file(5)) == "I did" + i:
+                                    coachspeak = client.synthesize_speech(texttospeech.types.SynthesisInput(text=praise), coach, audio_config)
+                                    counter += 1
+                                    speak(coachspeak, counter)
+                                    girlspeak = client.synthesize_speech(texttospeech.types.SynthesisInput(text=item[-1]), girl, audio_config)
+                                    counter += 1
+                                    speak(girlspeak, counter)
+                                    if transcribe_file(record_file(5)) == "I did" + i:
+                                        notYet = False
+                            elif i == response.split(" ")[-1] and verify_response(twenty(i), "action") == False:
+                                coachspeak = client.synthesize_speech(texttospeech.types.SynthesisInput(text= ("That's not a " + str(item))), coach, audio_config)
+                                counter += 1
+                                speak(coachspeak, counter)
+                                coachspeak = client.synthesize_speech(texttospeech.types.SynthesisInput(text=critic), coach, audio_config)
+                                counter += 1
+                                speak(coachspeak, counter)
+                                girlspeak = client.synthesize_speech(texttospeech.types.SynthesisInput(text=item[-1]), girl, audio_config)
+                                counter += 1
+                                speak(girlspeak, counter)
+                                response = transcribe_file(record_file(5))
+        girlspeak = client.synthesize_speech(exit, girl, audio_config)
+        counter += 1
+        speak(girlspeak, counter)
+        convoDone = True
+
+
+
+
+
+conversation()
 
 # # The response's audio_content is binary.
 # with open('output.mp3', 'wb') as out:
@@ -169,4 +263,3 @@ def loadmp3player(file):
 
     # [END speech_python_migration_sync_response]
 # [END speech_transcribe_sync]
-print(transcribe_file(record_file(5)))
