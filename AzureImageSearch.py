@@ -1,5 +1,4 @@
-
-
+# pip install azure-cognitiveservices-search-imagesearch
 from azure.cognitiveservices.search.imagesearch import ImageSearchAPI
 from msrest.authentication import CognitiveServicesCredentials
 
@@ -8,13 +7,14 @@ from PIL import Image
 import requests
 from io import BytesIO
 
-
+# Azure Set Up
 subscription_key = "768fb70aaef144a4bbdcd344c8b80c8a"
 search_term = "hamburger"
 
 client = ImageSearchAPI(CognitiveServicesCredentials(subscription_key))
 image_results = client.images.search(query=search_term)
 
+# Display results, if found
 if image_results.value:
     first_image_result = image_results.value[0]
     print("Total number of images returned: {}".format(len(image_results.value)))
